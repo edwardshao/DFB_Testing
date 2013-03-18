@@ -178,6 +178,7 @@ int main (int argc, char **argv)
     }
 	end = get_current_time();
 	diff = diff_time(&start, &end);
+	printf("screen: (%d, %d), image: (%d, %d)\n", screen_width, screen_height, dsc.width, dsc.height);
 	printf("frames: %d (%d ~ %d, %d)\n", frames, start, end, diff);
 	printf("FPS: %f\n", ((double)frames / (double)diff) * (double)1000000);
 
