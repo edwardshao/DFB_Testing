@@ -43,6 +43,8 @@
 
 #include <directfb.h>
 
+#include "mytime.h"
+
 /*
  * (Globals)
  */
@@ -149,7 +151,11 @@ int main (int argc, char **argv)
   /*
    * We want to let the logo slide in on the left and slide out on the right.
    */
+ unsigned int frames;
+ time_t start, end, diff;
   while (1) {
+	frames = 0;
+	start = get_current_time();
   for (i = -dsc.width; i < screen_width; i += step)
     {
       /*
@@ -168,7 +174,13 @@ int main (int argc, char **argv)
        * avoid tearing.
        */
       DFBCHECK (primary->Flip (primary, NULL, DSFLIP_WAITFORSYNC));
+      frames++;
     }
+	end = get_current_time();
+	diff = diff_time(&start, &end);
+	printf("frames: %d (%d ~ %d, %d)\n", frames, start, end, diff);
+	printf("FPS: %f\n", ((double)frames / (double)diff) * (double)1000000);
+
 	DFBCHECK (primary->FillRectangle (primary, 0, 0, screen_width, screen_height));
 	DFBCHECK (primary->Flip (primary, NULL, DSFLIP_WAITFORSYNC));
 	sleep(3);
