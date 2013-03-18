@@ -68,13 +68,14 @@ static IDirectFBSurface *logo = NULL;
 
 void usage(int argc, char *argv[])
 {
-	fprintf(stderr, "usage: %s [image file name]\n", argv[0]);
+	fprintf(stderr, "usage: %s [image file name] [step]\n", argv[0]);
 }
 
 int main (int argc, char **argv)
 {
   int i;
   char *file_name;
+  int step;
 
   if (argc < 2) {
 	usage(argc, argv);
@@ -82,6 +83,13 @@ int main (int argc, char **argv)
   }
 
   file_name = argv[1];
+
+  if (argc >= 3)
+	step = atoi(argv[2]);
+  else
+	step = 1;
+
+  fprintf(stdout, "image: %s, step: %d\n", file_name, step);
 
   /*
    * (Locals)
@@ -141,7 +149,8 @@ int main (int argc, char **argv)
   /*
    * We want to let the logo slide in on the left and slide out on the right.
    */
-  for (i = -dsc.width; i < screen_width; i++)
+  while (1) {
+  for (i = -dsc.width; i < screen_width; i += step)
     {
       /*
        * Clear the screen.
@@ -159,6 +168,10 @@ int main (int argc, char **argv)
        * avoid tearing.
        */
       DFBCHECK (primary->Flip (primary, NULL, DSFLIP_WAITFORSYNC));
+    }
+	DFBCHECK (primary->FillRectangle (primary, 0, 0, screen_width, screen_height));
+	DFBCHECK (primary->Flip (primary, NULL, DSFLIP_WAITFORSYNC));
+	sleep(3);
     }
 
   /*
