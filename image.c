@@ -38,6 +38,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include <directfb.h>
@@ -65,10 +66,22 @@ static int screen_height = 0;
  */
 static IDirectFBSurface *logo = NULL;
 
+void usage(int argc, char *argv[])
+{
+	fprintf(stderr, "usage: %s [image file name]\n", argv[0]);
+}
 
 int main (int argc, char **argv)
 {
   int i;
+  char *file_name;
+
+  if (argc < 2) {
+	usage(argc, argv);
+	exit(0);
+  }
+
+  file_name = argv[1];
 
   /*
    * (Locals)
@@ -95,7 +108,7 @@ int main (int argc, char **argv)
    * First we need to create an Image Provider by passing a filename.
    * DirectFB will find (or not) an Image Provider for the file type.
    */
-  DFBCHECK (dfb->CreateImageProvider (dfb, DATADIR"/dfblogo.png", &provider));
+  DFBCHECK (dfb->CreateImageProvider (dfb, file_name, &provider));
 
   /*
    * Get a surface description from the provider. It will contain the width,
