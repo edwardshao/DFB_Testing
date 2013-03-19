@@ -7,7 +7,9 @@ LFLAGS = -Wl,-O1 -Wl,-rpath-link -Wl,/home/laface/JewelryBox/sdk/cs_rootfs/cross
 CC = mipsel-linux-gcc
 
 all:
+	$(CC) -o pss pss.c $(INCS) $(LIBS) $(LFLAGS)
 	$(CC) -o image image.c mytime.c $(INCS) $(LIBS) $(LFLAGS)
 	sudo cp image /var/www
+	sudo cp pss /var/www
 clean:
 	rm -rf image
