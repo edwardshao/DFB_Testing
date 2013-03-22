@@ -39,6 +39,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <unistd.h>
 
 #include <directfb.h>
@@ -67,6 +68,65 @@ static int screen_height = 0;
  * The image is to be loaded into a surface that we can blit from.
  */
 static IDirectFBSurface *logo = NULL;
+
+void scale(unsigned int *frames)
+{
+	double b = 0;
+	int runs = 400;
+
+	while (runs--) {
+		double f;
+		DFBRectangle rect;
+
+		primary->FillRectangle( primary, 0, 0, screen_width, screen_height);
+
+		f = cos(b) * 30  +  sin(b+0.5) * 40;
+
+		rect.w = (int)((sin(f*cos(f/10.0))/2 + 1.2)*800);
+		rect.h = (int)((sin(f*sin(f/10.0)) + 1.2)*300);
+		
+		rect.x = (screen_width - rect.w) / 2;
+		rect.y = (screen_height - rect.h) / 2;
+
+		primary->StretchBlit( primary, logo, NULL, &rect );
+
+		b += .001;
+
+		/* flip display */
+		DFBCHECK(primary->Flip( primary, NULL, DSFLIP_WAITFORSYNC ));
+
+		(*frames)++;
+	}	
+}
+
+void slide(unsigned int *frames, int step)
+{
+	int i;
+        int logo_width, logo_height;
+
+	DFBCHECK(logo->GetSize(logo, &logo_width, &logo_height));
+
+	for (i = -logo_width; i < screen_width; i += step) {
+		/*
+		 * Clear the screen.
+		 */
+		DFBCHECK (primary->FillRectangle (primary, 0, 0, screen_width, screen_height));
+
+		/*
+		 * Blit the logo vertically centered with "i" as the X coordinate.
+		 * NULL means that we want to blit the whole surface.
+		 */
+		DFBCHECK (primary->Blit (primary, logo, NULL, i, (screen_height - logo_height) / 2));
+
+		/*
+		 * Flip the front and back buffer, but wait for the vertical retrace to
+		 * avoid tearing.
+		 */
+		DFBCHECK (primary->Flip (primary, NULL, DSFLIP_WAITFORSYNC));
+		
+		(*frames)++;
+	}
+}
 
 void usage(int argc, char *argv[])
 {
@@ -155,29 +215,15 @@ int main (int argc, char **argv)
  time_t start, end, diff;
   while (1) {
 	frames = 0;
+
 	start = get_current_time();
-  for (i = -dsc.width; i < screen_width; i += step)
-    {
-      /*
-       * Clear the screen.
-       */
-      DFBCHECK (primary->FillRectangle (primary, 0, 0, screen_width, screen_height));
 
-      /*
-       * Blit the logo vertically centered with "i" as the X coordinate.
-       * NULL means that we want to blit the whole surface.
-       */
-      DFBCHECK (primary->Blit (primary, logo, NULL, i, (screen_height - dsc.height) / 2));
+	slide(&frames, step);
+	//scale(&frames);	
 
-      /*
-       * Flip the front and back buffer, but wait for the vertical retrace to
-       * avoid tearing.
-       */
-      DFBCHECK (primary->Flip (primary, NULL, DSFLIP_WAITFORSYNC));
-      frames++;
-    }
 	end = get_current_time();
 	diff = diff_time(&start, &end);
+
 	printf("screen: (%d, %d), image: (%d, %d)\n", screen_width, screen_height, dsc.width, dsc.height);
 	printf("frames: %d (%d ~ %d, %d)\n", frames, start, end, diff);
 	printf("FPS: %f\n", ((double)frames / (double)diff) * (double)1000000);
