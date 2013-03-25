@@ -53,6 +53,7 @@ static IDirectFB *dfb = NULL;
 static IDirectFBSurface *primary = NULL;
 static int screen_width  = 0;
 static int screen_height = 0;
+static int fps = 100;
 #define DFBCHECK(x...)                                         \
   {                                                            \
     DFBResult err = x;                                         \
@@ -103,13 +104,20 @@ void slide(unsigned int *frames, int step)
 {
 	int i;
         int logo_width, logo_height;
+	time_t start, end, diff;
+	int remain_us;
+	float interval;
 
 	DFBCHECK(logo->GetSize(logo, &logo_width, &logo_height));
+
+	interval = (float)1000 / (float)fps;
+	printf("interval: %f ms\n", interval);
 
 	for (i = -logo_width; i < screen_width; i += step) {
 		/*
 		 * Clear the screen.
 		 */
+		start = get_current_time();
 		DFBCHECK (primary->FillRectangle (primary, 0, 0, screen_width, screen_height));
 
 		/*
@@ -123,7 +131,14 @@ void slide(unsigned int *frames, int step)
 		 * avoid tearing.
 		 */
 		DFBCHECK (primary->Flip (primary, NULL, DSFLIP_WAITFORSYNC));
-		
+		end = get_current_time();
+		diff = diff_time(&start, &end);
+		remain_us = (interval * 1000 - (float)diff);
+//		printf("diff: %d us, remain:%d\n", diff, remain_us);
+		if (remain_us > 0) {
+			usleep(remain_us);
+		}
+
 		(*frames)++;
 	}
 }
@@ -151,7 +166,10 @@ int main (int argc, char **argv)
   else
 	step = 1;
 
-  fprintf(stdout, "image: %s, step: %d\n", file_name, step);
+  if (argc >= 4)
+	fps = atoi(argv[3]);
+
+  fprintf(stdout, "image: %s, step: %d, fps: %d\n", file_name, step, fps);
 
   /*
    * (Locals)
